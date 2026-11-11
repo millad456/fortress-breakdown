@@ -35,7 +35,9 @@ await shot('01-intro');
 
 // skip the intro and settle on the overview
 await page.evaluate(() => { document.querySelector('[data-intro-skip]')?.click(); });
-await wait(3500);
+await wait(1500);
+// camera flights are time-stepped, and headless SwiftShader renders ~2 fps, so jump straight to the pose
+await pose([720, 340, 580], [220, 20, 40], 1500);
 await shot('02-overview');
 
 const pose = async (position, target, ms = 1200) => {
