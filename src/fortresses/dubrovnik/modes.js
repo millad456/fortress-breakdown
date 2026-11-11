@@ -45,7 +45,7 @@ const fanMaterial = (color) => new THREE.ShaderMaterial({
     uniform vec3 uColor; uniform float uTime; uniform float uOpacity; varying vec2 vUv;
     void main(){
       float d = vUv.x;                       // 0 centre .. 1 rim
-      float base = (1.0 - d) * 0.35 + 0.05;
+      float base = (1.0 - d) * 0.2 + 0.03;
       float ring = smoothstep(0.03, 0.0, abs(fract(d * 1.0 - uTime * 0.18) - 0.5) - 0.47) ;
       float pulse = fract(uTime * 0.25);
       float wave = smoothstep(0.035, 0.0, abs(d - pulse)) * (1.0 - pulse) * 1.2;
@@ -97,6 +97,7 @@ export function createModes({ engine, built, fx, content }) {
     if (!id || !highlightTargets[id] || highlightTargets[id].r === 0) { ring.visible = false; return; }
     const t = highlightTargets[id];
     ring.visible = true;
+    ring.userData.id = id;
     ring.position.set(t.c[0], Math.max(0, heightAt(t.c[0], t.c[1])) + 1.5, t.c[1]);
     ring.scale.setScalar(t.r); ringT = 0;
   }
@@ -220,7 +221,7 @@ function createSieges({ engine, built, fx, content }) {
       setup() {
         fleets.arab ||= fx.createFleet({ count: 26, kind: 'galley', color: 0x4a3524, sail: 0xd9c9a4, seed: 3 });
         fleets.byz ||= fx.createFleet({ count: 18, kind: 'galley', color: 0x5a3a2a, sail: 0xb84c3a, seed: 9 });
-        const far = ringPoints(200, 120, 1500, 26, 1.9, 3.6);
+        const far = ringPoints(200, 120, 950, 26, 1.9, 3.6);
         fleets.arab.setPositions(far); fleets.arab.setVisible(true); fleets.arab.setOpacity(1);
         fleets.byz.setPositions(ringPoints(200, 120, 2600, 18, 2.0, 2.5)); fleets.byz.setVisible(true); fleets.byz.setOpacity(0);
         this.phase = -1;

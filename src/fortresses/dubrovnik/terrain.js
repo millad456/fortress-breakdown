@@ -51,7 +51,7 @@ function mainland(x, z) {
 function lovrijenacRock(x, z) {
   const dx = x - LOVRIJENAC.c[0], dz = z - LOVRIJENAC.c[1];
   const r = Math.sqrt(dx * dx + dz * dz * 0.8);
-  return LOVRIJENAC.rockH * (1 - smoothstep(26, 62, r));
+  return LOVRIJENAC.rockH * (1 - smoothstep(24, 50, r));
 }
 
 function lokrum(x, z) {
@@ -134,14 +134,14 @@ const C = {
   seabed: new THREE.Color(0x4f6b5a),
   seabedDeep: new THREE.Color(0x25383a),
   sand: new THREE.Color(0xd8c7a0),
-  rock: new THREE.Color(0xa9a399),
-  rockLight: new THREE.Color(0xc9c2b4),
-  scrub: new THREE.Color(0x6a7446),
-  scrubDry: new THREE.Color(0x8f8a5a),
-  forest: new THREE.Color(0x3b5733),
-  city: new THREE.Color(0xcbc3b1),
-  moat: new THREE.Color(0x7a8a5a),
-  high: new THREE.Color(0x9a9589),
+  rock: new THREE.Color(0x8b8578),
+  rockLight: new THREE.Color(0xa49c8c),
+  scrub: new THREE.Color(0x5f6a3e),
+  scrubDry: new THREE.Color(0x857d52),
+  forest: new THREE.Color(0x344d2e),
+  city: new THREE.Color(0xb9af9b),
+  moat: new THREE.Color(0x66743f),
+  high: new THREE.Color(0x8e8a7c),
 };
 
 export function colorAt(x, z, h, slope, out) {

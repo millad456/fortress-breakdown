@@ -12,9 +12,14 @@ const bad = [];
 for (const [name, ids] of files) {
   const url = `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(name)}?width=200`;
   try {
-    const r = await fetch(url, { method: 'HEAD', redirect: 'follow', headers: { 'User-Agent': 'FortressBreakdown/0.1 (dev photo check)' } });
+    let r, tries = 0;
+    do {
+      if (tries) await new Promise((res) => setTimeout(res, 8000 * tries));
+      r = await fetch(url, { method: 'HEAD', redirect: 'follow', headers: { 'User-Agent': 'FortressBreakdown/0.1 (dev photo check)' } });
+      tries++;
+    } while (r.status === 429 && tries < 4);
     if (!r.ok) { bad.push([name, r.status, ids]); console.log('MISSING', r.status, name, ids.join(',')); }
   } catch (e) { bad.push([name, e.message, ids]); console.log('ERROR', name, e.message); }
-  await new Promise((r) => setTimeout(r, 700));
+  await new Promise((r) => setTimeout(r, 1500));
 }
 console.log(bad.length ? `${bad.length} problem(s)` : 'All photos resolve.');

@@ -6,10 +6,14 @@ import { mkdirSync } from 'node:fs';
 const base = process.argv[2] || 'http://localhost:5173';
 mkdirSync('shots', { recursive: true });
 
-const browser = await chromium.launch({
+const launchOpts = {
   headless: true,
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'],
-});
+};
+// Prefer the system Chrome (no download needed); fall back to Playwright's Chromium.
+let browser;
+try { browser = await chromium.launch({ ...launchOpts, channel: process.env.PW_CHANNEL || 'chrome' }); }
+catch (e) { console.log('system chrome unavailable, using bundled chromium:', e.message.split('\n')[0]); browser = await chromium.launch(launchOpts); }
 const page = await browser.newPage({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: 1 });
 const errors = [];
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errors.push(`[${m.type()}] ${m.text()}`); });
@@ -58,12 +62,21 @@ await page.evaluate(() => { window.__fb.ui.setMode('timeline'); document.querySe
 await pose([930, 430, 760], [220, 20, 40], 1200); await shot('12-timeline-1330');
 await page.evaluate(() => { document.querySelector('[data-year-slider]').value = 1480; document.querySelector('[data-year-slider]').dispatchEvent(new Event('input')); });
 await wait(800); await shot('13-timeline-1480');
+// Headless SwiftShader runs at a few fps, so step the simulation by hand to reach a representative moment.
+const stepSim = (seconds) => page.evaluate((s) => {
+  const { world } = window.__fb; const dt = 1 / 30;
+  for (let t = 0; t < s; t += dt) { world.siege.update(dt); world.fx.update(dt, performance.now() / 1000 + t); }
+}, seconds);
 await page.evaluate(() => { window.__fb.ui.setMode('siege'); document.querySelector('[data-siege="siege1991"]').click(); });
 await wait(1000);
 await page.evaluate(() => { window.__fb.world.siege.setProgress(0.55); });
-await pose([950, 380, 640], [220, 30, 20], 6000); await shot('14-siege-1991');
+await stepSim(7);
+await pose([950, 380, 640], [220, 30, 20], 1500); await shot('14-siege-1991');
+await pose([330, 150, 330], [200, 20, 60], 1200); await shot('14b-siege-1991-close');
 await page.evaluate(() => { document.querySelector('[data-siege="saracen866"]').click(); window.__fb.world.siege.setProgress(0.4); });
-await pose([700, 330, 1150], [200, 10, 150], 5000); await shot('15-siege-866');
+await stepSim(30);
+await pose([700, 330, 1150], [200, 10, 150], 1500); await shot('15-siege-866');
+await pose([420, 90, 700], [250, 5, 350], 1200); await shot('15b-siege-866-close');
 await page.evaluate(() => { window.__fb.ui.setMode('explore'); window.__fb.engine.setTimeOfDay(22.3); });
 await pose([930, 430, 760], [220, 20, 40], 1500); await shot('16-night');
 await pose([60, 120, -260], [98, 50, -126], 1200); await shot('17-night-minceta');

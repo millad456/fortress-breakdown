@@ -111,8 +111,9 @@ export function insetPolygon(poly, d) {
     const s = 1 / Math.max(0.5, cos);
     out.push([cur[0] + nx * d * s, cur[1] + nz * d * s]);
   }
-  // Verify direction: inset must reduce |area|; otherwise flip.
-  if (Math.abs(polygonArea(out)) > Math.abs(polygonArea(poly))) {
+  // Verify direction: a positive inset must reduce |area| (negative must grow it); otherwise flip.
+  const shrank = Math.abs(polygonArea(out)) < Math.abs(polygonArea(poly));
+  if (shrank !== d > 0) {
     return poly.map((p, i) => [2 * p[0] - out[i][0], 2 * p[1] - out[i][1]]);
   }
   return out;

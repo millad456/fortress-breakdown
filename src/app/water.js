@@ -89,7 +89,7 @@ export function createWater({ size = 9000, center = [300, 0, -250], depthTexture
 
         // sun glitter
         vec3 H = normalize(V + uSunDir);
-        float spec = pow(max(dot(n, H), 0.0), 320.0) * 3.5 + pow(max(dot(n, H), 0.0), 40.0) * 0.25;
+        float spec = pow(max(dot(n, H), 0.0), 420.0) * 1.3 + pow(max(dot(n, H), 0.0), 40.0) * 0.12;
         float glint = vnoise(p * 2.0 + t) ;
         spec *= (0.6 + 0.8 * glint) * smoothstep(-0.05, 0.1, uSunDir.y);
 
@@ -97,9 +97,9 @@ export function createWater({ size = 9000, center = [300, 0, -250], depthTexture
         col += uSunColor * spec;
 
         // shoreline foam
-        float foam = smoothstep(2.2, 0.3, depth) * (0.35 + 0.65 * vnoise(p * 0.9 + vec2(t * 0.6, t * 0.4)));
+        float foam = smoothstep(1.3, 0.2, depth) * (0.3 + 0.7 * vnoise(p * 0.9 + vec2(t * 0.6, t * 0.4)));
         foam *= 0.6 + 0.4 * sin(t * 1.8 + depth * 2.0);
-        col = mix(col, vec3(0.9, 0.95, 0.95) * (0.3 + 0.7 * uDay), clamp(foam, 0.0, 1.0) * 0.8);
+        col = mix(col, vec3(0.9, 0.95, 0.95) * (0.3 + 0.7 * uDay), clamp(foam, 0.0, 1.0) * 0.55);
 
         gl_FragColor = vec4(col, 1.0);
         #include <fog_fragment>

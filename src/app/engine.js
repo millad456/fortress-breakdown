@@ -46,7 +46,7 @@ export class Engine {
     this.quality = quality;
     this.clock = new THREE.Clock();
     this.updaters = new Set();
-    this.hour = 17.6;
+    this.hour = 18.7;
     this._flights = [];
     this.running = false;
 
@@ -71,7 +71,7 @@ export class Engine {
 
     // Scene & camera
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.Fog(0xc9d6e2, 900, 4200);
+    this.scene.fog = new THREE.Fog(0xc9d6e2, 1500, 7500);
     this.camera = new THREE.PerspectiveCamera(46, container.clientWidth / container.clientHeight, 1, 20000);
     this.camera.position.set(900, 420, 760);
 
@@ -156,7 +156,7 @@ export class Engine {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-    const m = new THREE.PointsMaterial({ size: 28, sizeAttenuation: true, vertexColors: true, transparent: true, opacity: 0, depthWrite: false, fog: false });
+    const m = new THREE.PointsMaterial({ size: 2.2, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 0, depthWrite: false, fog: false });
     const pts = new THREE.Points(g, m);
     pts.frustumCulled = false;
     pts.renderOrder = -10;
@@ -177,15 +177,15 @@ export class Engine {
     const golden = 1 - THREE.MathUtils.smoothstep(elevDeg, 4, 30); // 1 near horizon
     const sunCol = new THREE.Color().setHSL(0.09 + 0.04 * (1 - golden), 0.75 * golden + 0.08, 0.55 + 0.35 * (1 - golden));
     this.sun.color.copy(sunCol);
-    this.sun.intensity = 3.4 * day * (0.55 + 0.45 * (1 - golden));
+    this.sun.intensity = 2.5 * day * (0.6 + 0.4 * (1 - golden));
     this.sun.position.copy(this.sunDir).multiplyScalar(1400).add(this.sunTarget.position);
     this.sun.castShadow = day > 0.05;
 
     const sky = this.sky.material.uniforms;
     sky.sunPosition.value.copy(this.sunDir);
-    sky.turbidity.value = 3 + 7 * golden;
-    sky.rayleigh.value = 0.8 + 2.2 * golden;
-    sky.mieCoefficient.value = 0.004 + 0.01 * golden;
+    sky.turbidity.value = 2.2 + 4.5 * golden;
+    sky.rayleigh.value = 0.5 + 1.8 * golden;
+    sky.mieCoefficient.value = 0.003 + 0.008 * golden;
     sky.mieDirectionalG.value = 0.8;
 
     // ambient / hemisphere
@@ -193,15 +193,15 @@ export class Engine {
     skyCol.lerp(new THREE.Color(0xf0b78a), golden * day * 0.35);
     this.hemi.color.copy(skyCol);
     this.hemi.groundColor.set(0x6b6a5a).lerp(new THREE.Color(0x101418), 1 - day);
-    this.hemi.intensity = 0.25 + 0.5 * day;
-    this.moon.intensity = 0.55 * (1 - day);
+    this.hemi.intensity = 0.2 + 0.35 * day;
+    this.moon.intensity = 1.1 * (1 - day);
     this.stars.material.opacity = (1 - day) * 0.9;
 
     // fog colour follows horizon
     const horizon = new THREE.Color().lerpColors(new THREE.Color(0x0b1020), new THREE.Color(0xc9d6e2), day);
     horizon.lerp(new THREE.Color(0xe9b98c), golden * day * 0.6);
     this.scene.fog.color.copy(horizon);
-    this.renderer.toneMappingExposure = 0.6 + 0.4 * day;
+    this.renderer.toneMappingExposure = 0.55 + 0.3 * day;
     this.bloom.strength = 0.3 + 0.35 * (1 - day);
 
     this.day = day; this.golden = golden; this.sunColor = sunCol; this.horizonColor = horizon;
@@ -212,11 +212,12 @@ export class Engine {
     if (force || now - (this._lastEnv || 0) > 120) {
       this._lastEnv = now;
       if (this._envRT) this._envRT.dispose();
-      this._envRT = this.pmrem.fromScene(this.skyScene, 0, 1, 30000);
+      this.skyScene.add(this.sky); // an object has one parent: borrow the sky for the env render
+      this._envRT = this.pmrem.fromScene(this.skyScene, 0, 1, 200000);
       this.scene.environment = this._envRT.texture;
       this.scene.environmentIntensity = 0.35 + 0.55 * day;
     }
-    if (!this.scene.children.includes(this.sky)) this.scene.add(this.sky);
+    this.scene.add(this.sky);
     this.onTimeChanged?.(this);
   }
 

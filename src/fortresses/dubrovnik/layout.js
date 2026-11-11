@@ -43,7 +43,7 @@ export const LAND_SECTION = { from: 0, to: 8 };
 export const OUTER_BASTIONS = [0.09, 0.2, 0.31, 0.43, 0.54, 0.65, 0.76, 0.88];
 export const OUTER_OFFSET = 13;       // m between main wall and outer wall
 export const OUTER_HEIGHT = 6.5;      // m above ground
-export const MOAT_DEPTH = 3.2;
+export const MOAT_DEPTH = 4.5;
 
 /** Stradun (Placa) axis from Pile end to Luža square. */
 export const STRADUN = { a: [4, 7], b: [350, 13], width: 11 };
@@ -74,7 +74,7 @@ export const LANDMARKS = [
 
 /** Features outside the main circuit. */
 export const REVELIN = { c: [476, -28], poly: [[-32, -26], [28, -32], [42, 8], [12, 30], [-30, 22]], h: 20 };
-export const LOVRIJENAC = { c: [-166, 86], rockH: 37, poly: [[-36, -22], [26, -36], [36, 24], [-4, 40], [-34, 20]], tiers: [14, 7, 6] };
+export const LOVRIJENAC = { c: [-166, 86], rockH: 37, poly: [[-36, -22], [26, -36], [36, 24], [-4, 40], [-34, 20]], tiers: [19, 7, 6] };
 export const STJOHN = { c: [394, 206], w: 28, d: 46, h: 19 };
 export const FORT_IMPERIAL = { c: [300, -1215], w: 54, d: 32, h: 9 };
 export const LAZARETI = { c: [540, 16], count: 5, w: 10, d: 36, h: 8, gap: 4 };
@@ -108,7 +108,7 @@ export const SRDJ = { peak: [300, -1215], h: 412 };
 
 /** Camera poses for features (position, target). Filled for the hotspot fly-to. */
 export const CAMERA = {
-  overview:   { position: [930, 430, 760], target: [220, 20, 40] },
+  overview:   { position: [720, 340, 580], target: [220, 20, 40] },
   minceta:    { position: [60, 120, -260], target: [98, 50, -126] },
   bokar:      { position: [-170, 70, 250], target: [-22, 25, 112] },
   lovrijenac: { position: [-330, 110, 260], target: [-166, 50, 86] },

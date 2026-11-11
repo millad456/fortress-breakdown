@@ -126,7 +126,7 @@ export function buildWorld(engine, onProgress = () => {}) {
   // ---- materials
   onProgress(0.02, 'Quarrying limestone');
   const lime = TX.limestoneTextures(1);
-  const limeDark = TX.limestoneTextures(2, { base: [0.78, 0.74, 0.66] });
+  const limeDark = TX.limestoneTextures(2, { base: [0.62, 0.58, 0.5] });
   const roofTx = TX.roofTileTexture(3);
   const facade = TX.facadeTextures(5);
   const ground = TX.groundDetailTexture(13);
@@ -676,7 +676,7 @@ function buildCity(built, group, M, R) {
         // terrain under the footprint
         const corners = [[cx - 3, cz - 3], [cx + 3, cz - 3], [cx - 3, cz + 3], [cx + 3, cz + 3]].map((p) => heightAt(p[0], p[1]));
         const gmin = Math.min(...corners), gmax = Math.max(...corners);
-        houses.push({ x: cx, z: cz, w, d, h, base: gmin - 0.6, top: gmax + h, rot: axisAngle, old: R() < 0.42 });
+        houses.push({ x: cx + (R() - 0.5) * 0.6, z: cz + (R() - 0.5) * 0.6, w, d, h, base: gmin - 0.6, top: gmax + h, rot: axisAngle + (R() - 0.5) * 0.05, old: R() < 0.42, across: R() < 0.3 });
       }
     }
   }
@@ -695,8 +695,11 @@ function buildCity(built, group, M, R) {
     mtx.compose(p, q, s); bodies.setMatrixAt(i, mtx);
     const t = 0.9 + R() * 0.1; bodies.setColorAt(i, col.setRGB(t, t * 0.985, t * 0.95));
     const rh = 2.2 + R() * 1.2;
-    p.set(hh.x, hh.top, hh.z); s.set(hh.w + 0.7, rh, hh.d + 0.7);
+    p.set(hh.x, hh.top, hh.z);
+    if (hh.across) { e.set(0, hh.rot + Math.PI / 2, 0); q.setFromEuler(e); s.set(hh.d + 0.7, rh, hh.w + 0.7); }
+    else s.set(hh.w + 0.7, rh, hh.d + 0.7);
     mtx.compose(p, q, s); roofs.setMatrixAt(i, mtx);
+    e.set(0, hh.rot, 0); q.setFromEuler(e);
     const v = hh.old ? 0.62 + R() * 0.12 : 0.95 + R() * 0.05;
     roofs.setColorAt(i, col.setRGB(v, v * (hh.old ? 0.86 : 0.95), v * (hh.old ? 0.8 : 0.9)));
   });
@@ -752,18 +755,20 @@ function buildCity(built, group, M, R) {
   // Suburbs outside the walls (modern Dubrovnik on the slopes)
   const sub = [];
   for (let i = 0; i < 2600; i++) {
-    const x = -700 + R() * 1700, z = -900 + R() * 1000;
+    const x = -800 + R() * 1900, z = -950 + R() * 1050;
     if (pointInPolygon([x, z], cityPoly)) continue;
-    if (distToPolyline([x, z], cityPoly, true) < 70) continue;
-    if (dist2([x, z], L.LOVRIJENAC.c) < 80) continue;
-    if (dist2([x, z], L.REVELIN.c) < 70) continue;
+    const dWall = distToPolyline([x, z], cityPoly, true);
+    if (dWall < 170) continue;
+    if (dist2([x, z], L.LOVRIJENAC.c) < 90) continue;
+    if (dist2([x, z], L.REVELIN.c) < 110) continue;
+    if (dist2([x, z], L.LAZARETI.c) < 90) continue;
     const h = heightAt(x, z);
-    if (h < 6 || h > 240) continue;
+    if (h < 6 || h > 230) continue;
     const slope = Math.abs(heightAt(x + 6, z) - h) + Math.abs(heightAt(x, z + 6) - h);
-    if (slope > 4.5) continue;
-    const density = fbm(x / 260, z / 260, 2, 2, 0.5, 77);
-    if (R() > density * 1.15 - 0.15) continue;
-    sub.push({ x, z, w: 8 + R() * 6, d: 7 + R() * 5, h: 6 + R() * 6, base: h - 1.5, rot: R() * Math.PI });
+    if (slope > 4.2) continue;
+    const density = fbm(x / 300, z / 300, 2, 2, 0.5, 77) * smoothstep(170, 420, dWall);
+    if (R() > density * 0.9 - 0.2) continue;
+    sub.push({ x, z, w: 7 + R() * 4, d: 6 + R() * 4, h: 5 + R() * 5, base: h - 1.5, rot: R() * Math.PI });
   }
   const subBodies = new THREE.InstancedMesh(bodyGeo, new THREE.MeshStandardMaterial({ color: 0xe8e0d0, roughness: 0.9 }), sub.length);
   const subRoofs = new THREE.InstancedMesh(gableGeometry(1, 1, 1), M.roof, sub.length);
@@ -819,7 +824,7 @@ function buildTrees(built, group, M, R) {
   const tInst = new THREE.InstancedMesh(trunk, M.trunk, trees.length);
   const mtx = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), e = new THREE.Euler();
   const col = new THREE.Color();
-  const palette = [[0x2f4a2b, 0x3e5e33], [0x5a6b3a, 0x7a8148], [0x2d4a33, 0x40603c]];
+  const palette = [[0x2f4a2b, 0x3e5e33], [0x4b5a30, 0x66703c], [0x2d4a33, 0x40603c]];
   trees.forEach((t, i) => {
     p.set(t.x, t.y, t.z); e.set(0, R() * Math.PI, 0); q.setFromEuler(e); s.set(t.s * 0.75, t.s * (0.8 + R() * 0.5), t.s * 0.75);
     mtx.compose(p, q, s); inst.setMatrixAt(i, mtx);

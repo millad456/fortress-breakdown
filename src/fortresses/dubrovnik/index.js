@@ -11,7 +11,7 @@ import { pointInPolygon } from '../../app/geom.js';
 
 /** Cinematic intro path (camera points) and look-at points. */
 const INTRO = {
-  points: [[1700, 520, 1500], [1000, 260, 980], [380, 110, 640], [-150, 120, 420], [-320, 180, 60], [-60, 230, -330], [500, 260, -380], [930, 430, 760]],
+  points: [[1700, 520, 1500], [1000, 260, 980], [380, 110, 640], [-150, 120, 420], [-320, 180, 60], [-60, 230, -330], [500, 260, -380], [720, 340, 580]],
   lookAt: [[300, 20, 60], [300, 20, 60], [200, 25, 120], [-100, 40, 100], [60, 40, -60], [220, 30, -60], [260, 20, 20], [220, 20, 40]],
   duration: 26,
 };
@@ -45,6 +45,8 @@ export default {
       ambient.setDay(e.day);
       facade.emissiveIntensity = (1 - e.day) * 1.6;
       built.materials.canopy.color.setScalar(0.75 + 0.25 * e.day);
+      // fake floodlighting of the walls at night
+      for (const m of [built.materials.stone, built.materials.stoneDark]) { m.emissive.set(0xffb068); m.emissiveIntensity = (1 - e.day) * 0.22; }
     };
     engine.onTimeChanged(engine);
 
@@ -61,6 +63,8 @@ export default {
       id: 'dubrovnik',
       content,
       built,
+      fx,
+      ambient,
       heightAt,
       hotspots: built.hotspots,
       colliders: built.colliders,

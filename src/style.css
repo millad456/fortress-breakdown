@@ -67,8 +67,8 @@ em { font-style: italic; }
 .viewer { position: fixed; inset: 0; background: #000; overflow: hidden; }
 .stage { position: absolute; inset: 0; }
 .stage canvas.gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.stage .labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.viewer .ui { position: absolute; inset: 0; pointer-events: none; }
+.stage .labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
+.viewer .ui { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
 .viewer .ui > * { pointer-events: auto; }
 
 /* hotspots */
@@ -170,7 +170,10 @@ em { font-style: italic; }
 .siege-stats b { color: var(--ink); font-family: var(--serif); font-size: 18px; margin-right: 4px; }
 
 /* cross-section diagram */
-.xsec { width: 100%; height: auto; margin-top: 6px; }
+.xsec { width: 100%; max-width: 400px; height: auto; margin-top: 6px; flex: none; }
+.dock-card[data-dock="anatomy"] .anatomy-body { display: flex; gap: 18px; align-items: flex-start; }
+.dock-card[data-dock="anatomy"] .anatomy-body p { flex: 1; }
+@media (max-width: 900px) { .dock-card[data-dock="anatomy"] .anatomy-body { flex-direction: column; } .xsec { max-width: 100%; } }
 .xsec text { font-family: var(--sans); font-size: 9px; fill: var(--ink-2); }
 .xsec .lbl { fill: var(--gold-2); font-weight: 500; }
 

@@ -83,8 +83,8 @@ export function createUI({ root, engine, world, content, entry }) {
       <div class="dock-card" data-dock="anatomy">
         <div class="dock-row"><h4>Anatomy of the defences</h4><span class="spacer" style="flex:1"></span>
           <div class="legend"><span><i style="background:#d9462b"></i>Land wall 4–6 m</span><span><i style="background:#e07a2f"></i>West wall</span><span><i style="background:#e9c46a"></i>Harbour wall ~3 m</span><span><i style="background:#4cc9f0"></i>Sea wall 1.5–3 m</span><span><i style="background:#b48cff"></i>Outer wall</span><span><i style="background:#b3192b"></i>Forts (Lovrijenac 12 m)</span></div></div>
-        <p>Colour shows how thick each stretch of wall is. The land front, where siege engines and cannon could be brought up, is three to four times thicker than the sea walls perched on the cliffs. Buildings are faded so you can read the circuit.</p>
-        ${XSEC_SVG}
+        <div class="anatomy-body"><p>Colour shows how thick each stretch of wall is. The land front, where siege engines and cannon could be brought up, is three to four times thicker than the sea walls perched on the cliffs. Buildings are faded so you can read the circuit. Minčeta's drum is 6 m thick; Lovrijenac's seaward walls reach 12 m while its city-facing wall is only 60 cm — so the Republic could retake it from a mutinous garrison.</p>
+        ${XSEC_SVG}</div>
       </div>
       <div class="dock-card" data-dock="fire">
         <div class="dock-row"><h4>Fields of fire</h4><span style="flex:1"></span>

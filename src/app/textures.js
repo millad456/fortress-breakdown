@@ -23,7 +23,7 @@ function finish(canvas, { repeat = [1, 1], srgb = true, anisotropy = 8 } = {}) {
  * Limestone ashlar blocks. One tile = 4 m x 4 m of wall.
  * Returns { map, roughnessMap, bumpMap }.
  */
-export function limestoneTextures(seed = 1, { base = [0.86, 0.82, 0.74], rows = 8, size = 512 } = {}) {
+export function limestoneTextures(seed = 1, { base = [0.72, 0.67, 0.58], rows = 8, size = 512 } = {}) {
   const c = makeCanvas(size, size), ctx = c.getContext('2d');
   const r = rng(seed);
   const rowH = size / rows;
@@ -38,8 +38,8 @@ export function limestoneTextures(seed = 1, { base = [0.86, 0.82, 0.74], rows = 
     let x = (row % 2) * rowH * 0.9 - rowH * 1.3 + r() * rowH * 0.4;
     while (x < size) {
       const w = rowH * (1.3 + r() * 1.4);
-      const tint = (r() - 0.5) * 0.12;
-      const warm = (r() - 0.5) * 0.05;
+      const tint = (r() - 0.5) * 0.2;
+      const warm = (r() - 0.5) * 0.06;
       const cr = Math.min(255, (base[0] + tint + warm) * 255);
       const cg = Math.min(255, (base[1] + tint) * 255);
       const cb = Math.min(255, (base[2] + tint - warm) * 255);
@@ -57,8 +57,8 @@ export function limestoneTextures(seed = 1, { base = [0.86, 0.82, 0.74], rows = 
     }
   }
   // mortar lines darker on color map
-  ctx.globalAlpha = 0.35; ctx.fillStyle = '#5a5248';
-  for (let row = 0; row <= rows; row++) ctx.fillRect(0, row * rowH - 1, size, 2);
+  ctx.globalAlpha = 0.55; ctx.fillStyle = '#4a4238';
+  for (let row = 0; row <= rows; row++) ctx.fillRect(0, row * rowH - 1.5, size, 3);
   ctx.globalAlpha = 1;
   // grime / noise overlay
   const img = ctx.getImageData(0, 0, size, size), d = img.data;
