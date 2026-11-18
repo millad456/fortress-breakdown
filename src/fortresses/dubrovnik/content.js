@@ -485,7 +485,7 @@ export const features = [
 
 export const timeline = [
   { year: 614, label: 'Refugees found Ragusa', text: 'Survivors of the destruction of Epidaurum (Cavtat) by Avars and Slavs settle on the rocky islet of Laus. Slavs found Dubrava on the wooded slope opposite.', structures: [] },
-  { year: 866, label: 'The Saracen siege', text: 'An Aghlabid fleet from Bari besieges the walled islet for fifteen months. A Byzantine fleet under Niketas Ooryphas lifts the siege in 867–868.', structures: ['core-walls'] },
+  { year: 866, siege: 'saracen866', window: [862, 869], label: 'The Saracen siege', text: 'An Aghlabid fleet from Bari besieges the walled islet for fifteen months. A Byzantine fleet under Niketas Ooryphas lifts the siege in 867–868.', structures: ['core-walls'] },
   { year: 1205, label: 'Venetian rule', text: 'Venice, fresh from sacking Zadar, takes Ragusa under its wing. The city pays tribute and keeps most of its self-government for 150 years.', structures: [] },
   { year: 1272, label: 'The statute and the Stradun', text: 'The city statute fixes the street grid; the sea channel between Ragusa and Dubrava has been filled and the full wall circuit is drawn around the united town.', structures: ['main-walls'] },
   { year: 1301, label: 'Lovrijenac on record', text: 'The council elects a commander for the fort on the western cliff — the first hard date for Lovrijenac, which legend says was thrown up in three months to beat the Venetians.', structures: ['lovrijenac'] },
@@ -501,11 +501,11 @@ export const timeline = [
   { year: 1557, label: 'St John\'s unified', text: 'The harbour towers and batteries are fused into one massive fort with a rounded seaward face.', structures: ['stjohn-fort'] },
   { year: 1570, label: 'Bokar complete', text: 'The last stones go onto Fort Bokar; the fortress city reaches the form it has today.', structures: ['bokar-complete'] },
   { year: 1642, label: 'The Lazareti at Ploče', text: 'The permanent quarantine complex outside the eastern gate is finished after half a century of staged building.', structures: ['lazareti'] },
-  { year: 1667, label: 'The Great Earthquake', text: 'On 6 April the city is flattened and burns for twenty days; some 2,000 die in the city. The walls stand almost untouched.', structures: [] },
-  { year: 1806, label: 'The French walk in; the Russians fire', text: 'Lauriston\'s troops enter by invitation and occupy the city; Russian and Montenegrin forces besiege it from Srđ, raining about 3,000 cannonballs on the town. The French begin Fort Imperial.', structures: ['fort-imperial'] },
+  { year: 1667, siege: 'quake1667', window: [1667, 1669], disaster: true, label: 'The Great Earthquake', text: 'On 6 April the city is flattened and burns for twenty days; some 2,000 die in the city. The walls stand almost untouched.', structures: [] },
+  { year: 1806, siege: 'bombard1806', window: [1805, 1807], label: 'The French walk in; the Russians fire', text: 'Lauriston\'s troops enter by invitation and occupy the city; Russian and Montenegrin forces besiege it from Srđ, raining about 3,000 cannonballs on the town. The French begin Fort Imperial.', structures: ['fort-imperial'] },
   { year: 1808, label: 'Republic abolished', text: 'Marshal Marmont dissolves the 450-year-old Republic of Ragusa by decree and styles himself Duke of Ragusa.', structures: [] },
   { year: 1979, label: 'World Heritage', text: 'The Old City of Dubrovnik joins the UNESCO World Heritage List.', structures: [] },
-  { year: 1991, label: 'The siege', text: 'The JNA attacks on 1 October; the Old Town is shelled from 23 October and hit hardest on 6 December. UNESCO places the city on the List of World Heritage in Danger.', structures: [] },
+  { year: 1991, siege: 'siege1991', window: [1990, 1993], label: 'The siege', text: 'The JNA attacks on 1 October; the Old Town is shelled from 23 October and hit hardest on 6 December. UNESCO places the city on the List of World Heritage in Danger.', structures: [] },
   { year: 1998, label: 'Off the danger list', text: 'With roofs, palaces and paving restored, UNESCO removes Dubrovnik from the List of World Heritage in Danger.', structures: [] },
 ];
 

@@ -29,16 +29,16 @@ const CLOUD_DAY = new THREE.Color(0xf4f6f8);
 const CLOUD_NIGHT = new THREE.Color(0x303a4a);
 
 // Landmark anchor points [x, z].
-const MINCETA = [98, -126];
-const BOKAR = [-22, 112];
-const STJOHN = [394, 206];
-const REVELIN = [476, -28];
-const LOVRIJENAC = [-166, 86];
-const PILE = [0, 0];
-const PLOCE = [432, -4];
+const MINCETA = [158, -170];
+const BOKAR = [-34, 57];
+const STJOHN = [488, 160];
+const REVELIN = [480, -84];
+const LOVRIJENAC = [-185, 76];
+const PILE = [28, -32];
+const PLOCE = [426, -65];
 
 // Harbour water rectangle.
-const HARBOUR = { x0: 405, x1: 500, z0: 30, z1: 205 };
+const HARBOUR = { x0: 392, x1: 520, z0: 0, z1: 135 };
 
 /**
  * createAmbient({ scene, heightAt, seed })
@@ -134,12 +134,12 @@ function buildBirds(r, group, disposables) {
   const N = 36;
   // Flock home points: harbour, south sea walls, Lovrijenac, and a few in between.
   const homes = [
-    [452, 118], // Old Port
-    [210, 238], // south sea walls
-    [-166, 86], // Lovrijenac
-    [120, 212], // sea walls west
-    [470, 30], // harbour mouth / Ploče
-    [340, 250], // south of St John
+    [455, 70], // Old Port
+    [230, 310], // south sea walls
+    [-185, 76], // Lovrijenac
+    [40, 215], // sea walls west
+    [530, 120], // harbour mouth
+    [420, 270], // south of St John
   ];
 
   const flocks = [];
@@ -207,7 +207,7 @@ function buildBirds(r, group, disposables) {
   const posAttr = new THREE.BufferAttribute(positions, 3);
   posAttr.setUsage(THREE.DynamicDrawUsage);
   geometry.setAttribute('position', posAttr);
-  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(180, 70, 100), 900);
+  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(200, 70, 100), 1000);
 
   const material = new THREE.MeshBasicMaterial({
     color: 0xe6e7ea,
@@ -328,7 +328,7 @@ function buildBoats(r, h, group, disposables) {
   const NC = 4;
   for (let i = 0; i < NC; i++) {
     const cx = 40 + i * 115 + (r() - 0.5) * 30;
-    const cz = 470 + (r() - 0.5) * 40;
+    const cz = 520 + (r() - 0.5) * 40;
     const rx = 70 + r() * 50;
     const rz = 45 + r() * 35;
     const speed = 2 + r(); // m/s
@@ -507,12 +507,12 @@ function updateClouds(c, dt) {
 // =========================================================================
 
 const FLAG_SITES = [
-  [MINCETA[0], MINCETA[1], 35],
-  [BOKAR[0], BOKAR[1], 20],
+  [MINCETA[0], MINCETA[1], 42],
+  [BOKAR[0], BOKAR[1], 27],
   [STJOHN[0], STJOHN[1], 22],
   [REVELIN[0], REVELIN[1], 22],
-  [LOVRIJENAC[0], LOVRIJENAC[1], 52],
-  [PILE[0], PILE[1], 28],
+  [LOVRIJENAC[0], LOVRIJENAC[1], 36],
+  [PILE[0], PILE[1], 17],
 ];
 
 const FLAG_W = 3, FLAG_H = 1.8, FLAG_SX = 12, FLAG_SY = 6;
@@ -664,7 +664,7 @@ function buildNightLights(r, h, group, disposables) {
 
   // Stradun: lamps every ~12 m from Pile end to Ploče end.
   {
-    const ax = 4, az = 7, bx = 350, bz = 13;
+    const ax = 57, az = -25.5, bx = 338, bz = 46.5;
     const len = Math.hypot(bx - ax, bz - az);
     const count = Math.max(1, Math.round(len / 12));
     for (let i = 0; i <= count; i++) {
@@ -690,7 +690,7 @@ function buildNightLights(r, h, group, disposables) {
   }
 
   // Coarse ring of wall-walk lamps between landmarks.
-  const ring = [PILE, MINCETA, REVELIN, PLOCE, STJOHN, BOKAR, PILE];
+  const ring = [PILE, MINCETA, [300, -84], PLOCE, [440, -20], [385, 80], STJOHN, [433, 238], [350, 272], [246, 292], [150, 258], [60, 215], [25, 150], BOKAR, PILE];
   for (let s = 0; s < ring.length - 1; s++) {
     const a = ring[s], b = ring[s + 1];
     const len = Math.hypot(b[0] - a[0], b[1] - a[1]);

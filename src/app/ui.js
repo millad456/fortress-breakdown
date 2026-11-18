@@ -72,6 +72,7 @@ export function createUI({ root, engine, world, content, entry }) {
       <label class="tool" title="Time of day"><span>☀</span><input type="range" min="5" max="23" step="0.1" value="${engine.hour}" data-hour><span data-hour-label>${hourLabel(engine.hour)}</span></label>
       <button class="btn primary" data-tour>Guided tour</button>
     </div>
+    <button class="rail-toggle" data-rail-toggle title="Show or hide the list of places (L)"><span class="chev">‹</span><span>Places</span></button>
     <div class="left-rail" data-rail>
       ${features.map((f) => `<button data-feature="${f.id}"><span class="k">${esc(f.kind)}</span>${esc(f.name)}</button>`).join('')}
     </div>
@@ -88,15 +89,19 @@ export function createUI({ root, engine, world, content, entry }) {
       </div>
       <div class="dock-card" data-dock="fire">
         <div class="dock-row"><h4>Fields of fire</h4><span style="flex:1"></span>
-          <div class="legend"><span><i style="background:#ffb347"></i>Minčeta</span><span><i style="background:#ff6b6b"></i>Bokar</span><span><i style="background:#7bdff2"></i>Lovrijenac</span><span><i style="background:#9bf6a3"></i>St John</span><span><i style="background:#ffd166"></i>Revelin</span><span><i style="background:#cdb4ff"></i>Outer bastions</span><span><i style="background:#ffe08a;height:3px"></i>Harbour chain</span></div></div>
-        <p>Every approach is covered twice. Lovrijenac and Bokar cross their fire over the Pile bridge; Minčeta and the outer bastions sweep the moat; Revelin takes Ploče; St John and the Kaše breakwater seal the harbour, which could be closed with a chain at night. Nowhere could an attacker stand without being shot at from two directions.</p>
+          <div class="legend"><span><i style="background:#ffb347"></i>Minčeta</span><span><i style="background:#ff6b6b"></i>Bokar</span><span><i style="background:#7bdff2"></i>Lovrijenac</span><span><i style="background:#9bf6a3"></i>St John</span><span><i style="background:#ffd166"></i>Revelin</span><span><i style="background:#f29bd0"></i>Wall towers &amp; bastions</span><span><i style="background:#cdb4ff"></i>Outer bastions</span><span><i style="background:#ffe08a;height:3px"></i>Harbour chain</span></div></div>
+        <p>Each fan is the ground that work can actually reach: it stops at the town, and where the hillside rises above the guns. Every approach is covered twice. Lovrijenac and Bokar cross their fire over the Pile bridge; Minčeta and the outer bastions sweep the moat; Revelin takes Ploče; St John and the Kaše breakwater seal the harbour, which could be closed with a chain at night. Nowhere could an attacker stand without being shot at from two directions.</p>
       </div>
       <div class="dock-card" data-dock="timeline">
         <div class="dock-row"><div class="year"><span data-year>1250</span><small>year</small></div>
-          <input class="slider" type="range" min="${world.timelineRange[0]}" max="${world.timelineRange[1]}" step="1" value="1250" data-year-slider>
+          <div class="slider-wrap">
+            <div class="marks">${content.timeline.filter((e) => e.siege).map((e) => `<button class="mark ${e.disaster ? 'disaster' : ''}" data-mark="${e.year}" style="--at:${(e.year - world.timelineRange[0]) / (world.timelineRange[1] - world.timelineRange[0])}" title="${esc(e.year + ' · ' + e.label)}">${e.disaster ? '✦' : '⚔'}</button>`).join('')}</div>
+            <input class="slider" type="range" min="${world.timelineRange[0]}" max="${world.timelineRange[1]}" step="1" value="1250" data-year-slider>
+          </div>
           <button class="btn ghost" data-year-play>▶ Play</button></div>
         <div class="ticks"><span>700</span><span>1000</span><span>1300</span><span>1500</span><span>1700</span><span>1900</span><span>2026</span></div>
         <div class="event"><span class="ev-title" data-ev-title></span><span class="ev-text" data-ev-text></span></div>
+        <div class="diorama" data-diorama><span class="badge" data-dio-badge></span><div class="dio-text"><b data-dio-title></b><span data-dio-text></span></div><button class="btn ghost" data-dio-replay>Watch the full replay →</button></div>
       </div>
       <div class="dock-card" data-dock="siege">
         <div class="dock-row"><div class="chips" data-siege-chips>${content.sieges.map((s) => `<button class="chip" data-siege="${s.id}">${esc(s.name)} <span class="muted">${esc(s.years)}</span></button>`).join('')}</div>
@@ -118,12 +123,24 @@ export function createUI({ root, engine, world, content, entry }) {
       <button class="btn primary cta" data-intro-explore>Explore the walls</button>
       <button class="btn ghost skip" data-intro-skip>Skip intro</button>
     </div>
-    <p class="hint">Drag to orbit · scroll to zoom · right-drag to pan · click a marker</p>
+    <p class="hint">Drag to orbit · scroll to zoom · right-drag to pan · click a landmark</p>
     <div class="toast" data-toast></div>`;
 
   const $ = (sel) => root.querySelector(sel);
   const $$ = (sel) => [...root.querySelectorAll(sel)];
   const on = (el, ev, fn) => { el.addEventListener(ev, fn); cleanup.push(() => el.removeEventListener(ev, fn)); };
+
+  // ------------------------------------------------------------ layout: the rail can be hidden; docks and toasts keep clear of it
+  let railOpen = window.innerWidth > 900;
+  const setRail = (open) => { railOpen = open; root.classList.toggle('rail-open', open); };
+  setRail(railOpen);
+  root.classList.add('intro-on');
+  on($('[data-rail-toggle]'), 'click', () => setRail(!railOpen));
+
+  // ------------------------------------------------------------ highlighting: hover previews, selection sticks
+  let hoverId = null;
+  const applyHighlight = () => world.highlight(hoverId || activeFeature);
+  const setHover = (id) => { if (id === hoverId) return; hoverId = id; applyHighlight(); };
 
   // ------------------------------------------------------------ toast
   let toastT;
@@ -134,8 +151,10 @@ export function createUI({ root, engine, world, content, entry }) {
   for (const h of world.hotspots) {
     const div = document.createElement('div');
     div.className = `hotspot ${h.kind}`;
-    div.innerHTML = `<span class="dot"></span><span class="tag">${esc(h.name)}</span>`;
+    div.innerHTML = `<span class="tag">${esc(h.name)}</span>`;
     on(div, 'click', (e) => { e.stopPropagation(); openFeature(h.id); });
+    on(div, 'mouseenter', () => setHover(h.id));
+    on(div, 'mouseleave', () => setHover(null));
     const obj = new CSS2DObject(div);
     obj.position.copy(h.position);
     engine.scene.add(obj);
@@ -151,7 +170,7 @@ export function createUI({ root, engine, world, content, entry }) {
     const showLabels = mode !== 'anatomy' || true;
     for (const l of labels) {
       const dist = cam.distanceTo(l.pos);
-      let hidden = !showLabels || (tour && tour.active) || dist > 3200;
+      let hidden = !showLabels || !introDone || (tour && tour.active) || dist > 3200;
       if (!hidden && dist > 20) {
         tmp.copy(l.pos).sub(cam).normalize();
         ray.set(cam, tmp); ray.far = dist - 4;
@@ -160,7 +179,7 @@ export function createUI({ root, engine, world, content, entry }) {
       }
       l.div.classList.toggle('hidden', hidden);
       l.div.classList.toggle('far', dist > 1500);
-      l.div.classList.toggle('active', l.id === activeFeature);
+      l.div.classList.toggle('active', l.id === activeFeature || l.id === hoverId);
     }
   });
   cleanup.push(unregLabels, () => labels.forEach((l) => engine.scene.remove(l.obj)));
@@ -173,7 +192,8 @@ export function createUI({ root, engine, world, content, entry }) {
     if (!f) return;
     activeFeature = id;
     $$('[data-feature]').forEach((b) => b.classList.toggle('active', b.dataset.feature === id));
-    world.highlight(id);
+    applyHighlight();
+    root.classList.add('panel-open');
     if (fly) engine.flyTo({ ...world.cameraFor(id), duration: 2.4 });
     $('[data-p-era]').textContent = f.era || '';
     $('[data-p-title]').textContent = f.name;
@@ -208,7 +228,8 @@ export function createUI({ root, engine, world, content, entry }) {
   function closePanel() {
     panel.classList.remove('open');
     activeFeature = null;
-    world.highlight(null);
+    root.classList.remove('panel-open');
+    applyHighlight();
     $$('[data-feature]').forEach((b) => b.classList.remove('active'));
   }
   function openLightbox(src, caption) {
@@ -221,7 +242,31 @@ export function createUI({ root, engine, world, content, entry }) {
   }
   function closeLightbox() { lightbox?.remove(); lightbox = null; }
   on($('[data-close]'), 'click', closePanel);
-  $$('[data-feature]').forEach((b) => on(b, 'click', () => openFeature(b.dataset.feature)));
+  $$('[data-feature]').forEach((b) => {
+    on(b, 'click', () => openFeature(b.dataset.feature));
+    on(b, 'mouseenter', () => setHover(b.dataset.feature));
+    on(b, 'mouseleave', () => setHover(null));
+  });
+
+  // the models themselves: hover to light one up, click to open it
+  const canvas = engine.renderer.domElement;
+  const ndcOf = (e) => { const r = canvas.getBoundingClientRect(); return new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); };
+  const pickRay = new THREE.Raycaster();
+  const pickAt = (e) => { pickRay.setFromCamera(ndcOf(e), engine.camera); const id = world.pick(pickRay); return byId[id] ? id : null; };
+  let pendingMove = null, down = null;
+  on(canvas, 'pointermove', (e) => {
+    if (e.buttons || !introDone || (tour && tour.active)) { if (hoverId) { setHover(null); canvas.style.cursor = ''; } return; }
+    if (pendingMove) { pendingMove = e; return; }
+    pendingMove = e;
+    requestAnimationFrame(() => { const id = pickAt(pendingMove); pendingMove = null; setHover(id); canvas.style.cursor = id ? 'pointer' : ''; });
+  });
+  on(canvas, 'pointerleave', () => { setHover(null); canvas.style.cursor = ''; });
+  on(canvas, 'pointerdown', (e) => { down = [e.clientX, e.clientY]; });
+  on(canvas, 'pointerup', (e) => {
+    if (!down || !introDone || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5 || e.button !== 0) return;
+    const id = pickAt(e);
+    if (id) openFeature(id);
+  });
 
   // ------------------------------------------------------------ modes
   function setMode(next, { silent = false } = {}) {
@@ -229,10 +274,12 @@ export function createUI({ root, engine, world, content, entry }) {
     world.setMode(next);
     $$('[data-mode]').forEach((b) => b.classList.toggle('active', b.dataset.mode === next));
     $$('[data-dock]').forEach((d) => d.classList.toggle('show', d.dataset.dock === next && next !== 'explore'));
+    root.classList.toggle('has-dock', next !== 'explore');
+    if (next !== 'timeline') showDiorama(null);
     if (next === 'timeline') { setYear(+$('[data-year-slider]').value); }
-    if (next === 'fire' && !silent) engine.flyTo({ position: [420, 760, 560], target: [220, 0, 30], duration: 2.6 });
-    if (next === 'anatomy' && !silent && !activeFeature) engine.flyTo({ position: [240, 520, -520], target: [220, 20, 20], duration: 2.6 });
-    if (next === 'siege' && !silent) engine.flyTo({ position: [700, 380, 820], target: [220, 20, 40], duration: 2.6 });
+    if (next === 'fire' && !silent) engine.flyTo({ position: [250, 900, 330], target: [220, 0, 60], duration: 2.6 });
+    if (next === 'anatomy' && !silent && !activeFeature) engine.flyTo({ position: [240, 560, -560], target: [220, 20, 40], duration: 2.6 });
+    if (next === 'siege' && !silent) engine.flyTo({ position: [720, 400, 860], target: [220, 20, 60], duration: 2.6 });
     if (next !== 'siege') stopSiege();
     if (next !== 'timeline') stopYearPlay();
   }
@@ -245,10 +292,33 @@ export function createUI({ root, engine, world, content, entry }) {
   // ------------------------------------------------------------ timeline
   const yearSlider = $('[data-year-slider]');
   let yearPlay = null;
+  const dioramaEvents = content.timeline.filter((e) => e.siege);
+  const dioramaAt = (y) => dioramaEvents.find((e) => y >= e.window[0] && y <= e.window[1]) || null;
+  let shownDiorama = null;
+  function showDiorama(ev, { fly = true } = {}) {
+    const id = ev?.siege || null;
+    if (id === shownDiorama) return;
+    shownDiorama = id;
+    world.setDiorama(id);
+    const el = $('[data-diorama]');
+    el.classList.toggle('show', !!id);
+    $$('[data-mark]').forEach((m) => m.classList.toggle('active', !!ev && +m.dataset.mark === ev.year));
+    if (!ev) return;
+    const sg = content.sieges.find((x) => x.id === id);
+    el.classList.toggle('disaster', !!ev.disaster);
+    $('[data-dio-badge]').textContent = ev.disaster ? '✦ Disaster' : '⚔ Siege diorama';
+    $('[data-dio-title]').textContent = sg ? `${sg.name}, ${sg.years}` : `${ev.label}, ${ev.year}`;
+    $('[data-dio-text]').textContent = sg ? (sg.outcome || '') : 'Fires burn across the fallen town; the walls stand almost untouched. Scrub forward to watch it rebuilt.';
+    $('[data-dio-replay]').style.display = sg ? '' : 'none';
+    if (fly) engine.flyTo({ ...world.siegeCamera(id), duration: 2.4 });
+  }
+  on($('[data-dio-replay]'), 'click', () => { const id = shownDiorama; if (!id) return; stopYearPlay(); setMode('siege', { silent: true }); playSiege(id); });
+  $$('[data-mark]').forEach((m) => on(m, 'click', () => { stopYearPlay(); setYear(+m.dataset.mark); }));
   function setYear(y) {
     yearSlider.value = y;
     $('[data-year]').textContent = y < 1000 ? `${y} AD` : y;
     world.setYear(y);
+    showDiorama(mode === 'timeline' ? dioramaAt(y) : null);
     const events = content.timeline;
     let ev = null;
     for (const e of events) if (e.year <= y) ev = e;
@@ -261,9 +331,18 @@ export function createUI({ root, engine, world, content, entry }) {
     if (yearPlay) return stopYearPlay();
     let y = +yearSlider.value >= world.timelineRange[1] - 1 ? world.timelineRange[0] : +yearSlider.value;
     $('[data-year-play]').textContent = '⏸ Pause';
+    let held = null, hold = 0;
     yearPlay = engine.registerUpdate((dt) => {
+      // stop and watch each siege for a few seconds
+      const ev = dioramaAt(Math.round(y));
+      if (ev && ev !== held) {
+        if (hold === 0) setYear(ev.year);
+        hold += dt;
+        if (hold < 8) return;
+        held = ev; hold = 0; y = ev.window[1] + 1;
+      }
       // slow down around dense construction periods
-      const speed = y > 1240 && y < 1600 ? 12 : 40;
+      const speed = y > 1240 && y < 1600 ? 12 : y > 1600 ? 22 : 40;
       y = Math.min(world.timelineRange[1], y + dt * speed);
       setYear(Math.round(y));
       if (y >= world.timelineRange[1]) stopYearPlay();
@@ -283,8 +362,7 @@ export function createUI({ root, engine, world, content, entry }) {
     statsEl.innerHTML = (s.stats || []).map((st) => `<span><b>${esc(st.value)}</b>${esc(st.label)}</span>`).join('');
     $('[data-siege-pause]').textContent = '⏸';
     if (!siegeUnreg) siegeUnreg = engine.registerUpdate(() => { progEl.style.width = `${world.siege.progress * 100}%`; });
-    const cams = { saracen866: { position: [700, 330, 1150], target: [200, 10, 150] }, bombard1806: { position: [-500, 420, 700], target: [220, 30, 0] }, siege1991: { position: [950, 380, 640], target: [220, 30, 20] } };
-    engine.flyTo({ ...(cams[id] || world.cameraFor('overview')), duration: 3 });
+    engine.flyTo({ ...world.siegeCamera(id), duration: 3 });
   }
   function stopSiege() {
     world.siege.stop();
@@ -300,8 +378,8 @@ export function createUI({ root, engine, world, content, entry }) {
   const tourCard = $('[data-dock="tour"]');
   function startTour() {
     closePanel();
-    tour = { active: true, i: -1 };
-    $('[data-rail]').classList.add('collapsed');
+    tour = { active: true, i: -1, rail: railOpen };
+    setRail(false);
     gotoStep(0);
   }
   function gotoStep(i) {
@@ -316,11 +394,12 @@ export function createUI({ root, engine, world, content, entry }) {
     if (s.feature) openFeature(s.feature, { fly: true });
     else {
       closePanel();
-      const cam = s.mode === 'fire' ? { position: [420, 760, 560], target: [220, 0, 30] } : s.mode === 'siege' ? null : world.cameraFor(s.camera || 'overview');
+      const cam = s.mode === 'fire' ? { position: [250, 900, 330], target: [220, 0, 60] } : s.mode === 'siege' ? null : world.cameraFor(s.camera || 'overview');
       if (cam) engine.flyTo({ ...cam, duration: 3 });
     }
     if (s.mode === 'siege' || s.mode === 'timeline' || s.mode === 'anatomy' || s.mode === 'fire') $(`[data-dock="${s.mode}"]`).classList.add('show');
     tourCard.classList.add('show');
+    root.classList.add('has-dock');
     $('[data-tour-step]').textContent = `Stop ${i + 1} / ${steps.length}`;
     $('[data-tour-title]').textContent = s.title;
     $('[data-tour-text]').innerHTML = rich(s.text);
@@ -328,9 +407,9 @@ export function createUI({ root, engine, world, content, entry }) {
   }
   function exitTour() {
     if (!tour) return;
+    setRail(tour.rail);
     tour = null;
     tourCard.classList.remove('show');
-    $('[data-rail]').classList.remove('collapsed');
     setMode('explore');
     closePanel();
   }
@@ -344,6 +423,7 @@ export function createUI({ root, engine, world, content, entry }) {
     if (e.target.tagName === 'INPUT') return;
     const m = MODES.find((x) => x.k === e.key);
     if (m) { exitTour(); setMode(m.id); }
+    if (e.key === 'l' || e.key === 'L') setRail(!railOpen);
     if (e.key === 'Escape') { closeLightbox(); if (tour) exitTour(); else closePanel(); }
     if (tour && e.key === 'ArrowRight') gotoStep(tour.i + 1);
     if (tour && e.key === 'ArrowLeft') gotoStep(Math.max(0, tour.i - 1));
@@ -366,18 +446,36 @@ export function createUI({ root, engine, world, content, entry }) {
   // ------------------------------------------------------------ intro
   const intro = $('[data-intro]');
   let introDone = false;
+  const lens = engine.camera.fov, hourNow = engine.hour;
+  const setLens = (fov) => { engine.camera.fov = fov; engine.camera.updateProjectionMatrix(); };
   function finishIntro() {
     if (introDone) return;
     introDone = true;
+    setLens(lens);
+    if (Math.abs(engine.hour - hourNow) > 0.01) engine.setTimeOfDay(hourNow);
+    root.classList.remove('intro-on');
     intro.classList.add('hide');
     setTimeout(() => intro.remove(), 1000);
     if (engine.isFlying) engine.flyTo({ ...world.cameraFor('overview'), duration: 2.2 });
-    toast('Click any glowing marker to break it down. Press 1–5 to switch modes, N for night.', 5000);
+    toast('Hover a tower, gate or wall to light it up, click to break it down. 1–5 switch modes, N for night.', 5000);
   }
   function playIntro() {
     requestAnimationFrame(() => intro.classList.add('on'));
-    const { points, lookAt, duration } = world.intro;
-    engine.flyPath({ points, lookAt, duration, ease: (t) => t * t * (3 - 2 * t) * 0.15 + t * 0.85 }).then(() => finishIntro());
+    const { points, lookAt, duration, fov, hours } = world.intro;
+    const sm = (a, b, t) => { const k = Math.min(1, Math.max(0, (t - a) / (b - a))); return k * k * (3 - 2 * k); };
+    let lastHour = -1;
+    engine.flyPath({
+      points, lookAt, duration,
+      ease: (t) => 1 - Math.pow(1 - t, 2.1),   // arrive fast, settle slowly
+      onProgress: (k) => {
+        if (introDone) return;
+        if (fov) setLens(fov[0] + (lens - fov[0]) * sm(0.25, 1, k));
+        if (hours) { // the sun comes up as the camera comes in
+          const h = hours[0] + ((hours[1] ?? hourNow) - hours[0]) * sm(0, 0.85, k);
+          if (Math.abs(h - lastHour) > 0.04) { lastHour = h; engine.setTimeOfDay(h); }
+        }
+      },
+    }).then(() => finishIntro());
   }
   on($('[data-intro-skip]'), 'click', finishIntro);
   on($('[data-intro-explore]'), 'click', finishIntro);

@@ -147,3 +147,98 @@ export function rng(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
+
+/** Centroid (vertex average) of a polygon. */
+export function centroid(poly) {
+  let x = 0, z = 0;
+  for (const p of poly) { x += p[0]; z += p[1]; }
+  return [x / poly.length, z / poly.length];
+}
+
+/** Index of the vertex nearest to p. */
+export function nearestIndex(p, pts) {
+  let best = Infinity, bi = 0;
+  for (let i = 0; i < pts.length; i++) { const d = dist2(p, pts[i]); if (d < best) { best = d; bi = i; } }
+  return bi;
+}
+
+/**
+ * Spatial index over a closed polygon for fast repeated distance / inside queries (detailed coastlines).
+ * Edges are grouped into runs with bounding boxes so far-away runs are skipped.
+ */
+export function polygonIndex(poly, run = 12) {
+  const n = poly.length;
+  const chunks = [];
+  let X0 = Infinity, Z0 = Infinity, X1 = -Infinity, Z1 = -Infinity;
+  for (let s = 0; s < n; s += run) {
+    const e = Math.min(n, s + run);
+    let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
+    for (let i = s; i <= e; i++) {
+      const p = poly[i % n];
+      if (p[0] < x0) x0 = p[0]; if (p[0] > x1) x1 = p[0];
+      if (p[1] < z0) z0 = p[1]; if (p[1] > z1) z1 = p[1];
+    }
+    chunks.push({ s, e, x0, z0, x1, z1 });
+    X0 = Math.min(X0, x0); Z0 = Math.min(Z0, z0); X1 = Math.max(X1, x1); Z1 = Math.max(Z1, z1);
+  }
+  const _p = [0, 0];
+  function inside(x, z) {
+    if (x < X0 || x > X1 || z < Z0 || z > Z1) return false;
+    let c = false;
+    for (const ch of chunks) {
+      if (z < ch.z0 || z > ch.z1 || x > ch.x1) continue;
+      for (let i = ch.s; i < ch.e; i++) {
+        const a = poly[i], b = poly[(i + 1) % n];
+        if ((a[1] > z) !== (b[1] > z) && x < ((b[0] - a[0]) * (z - a[1])) / (b[1] - a[1] + 1e-12) + a[0]) c = !c;
+      }
+    }
+    return c;
+  }
+  /** Unsigned distance to the boundary; stops refining beyond `cap` (returns >= cap). */
+  function dist(x, z, cap = Infinity) {
+    let best = cap;
+    _p[0] = x; _p[1] = z;
+    for (const ch of chunks) {
+      const dx = x < ch.x0 ? ch.x0 - x : x > ch.x1 ? x - ch.x1 : 0;
+      const dz = z < ch.z0 ? ch.z0 - z : z > ch.z1 ? z - ch.z1 : 0;
+      if (dx >= best || dz >= best || dx * dx + dz * dz >= best * best) continue;
+      for (let i = ch.s; i < ch.e; i++) {
+        const d = distToSegment(_p, poly[i], poly[(i + 1) % n]);
+        if (d < best) best = d;
+      }
+    }
+    return best;
+  }
+  /** Signed distance: positive inside. */
+  function signedDist(x, z, cap = Infinity) {
+    const d = dist(x, z, cap);
+    return inside(x, z) ? d : -d;
+  }
+  return { inside, dist, signedDist, bounds: { x0: X0, z0: Z0, x1: X1, z1: Z1 } };
+}
+
+/** Minimum-area oriented bounding box of a polygon: { c:[x,z], ang, w (along ang), d (across), fill }. */
+export function orientedBox(poly) {
+  const n = poly.length;
+  let best = null;
+  for (let i = 0; i < n; i++) {
+    const a = poly[i], b = poly[(i + 1) % n];
+    const l = dist2(a, b);
+    if (l < 0.5) continue;
+    const ux = (b[0] - a[0]) / l, uz = (b[1] - a[1]) / l;
+    let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+    for (const p of poly) {
+      const u = p[0] * ux + p[1] * uz, v = -p[0] * uz + p[1] * ux;
+      if (u < u0) u0 = u; if (u > u1) u1 = u; if (v < v0) v0 = v; if (v > v1) v1 = v;
+    }
+    const area = (u1 - u0) * (v1 - v0);
+    if (!best || area < best.area) best = { area, ux, uz, u0, u1, v0, v1 };
+  }
+  if (!best) { const c = centroid(poly); return { c, ux: 1, uz: 0, w: 1, d: 1, fill: 1 }; }
+  let { ux, uz, u0, u1, v0, v1 } = best;
+  const cu = (u0 + u1) / 2, cv = (v0 + v1) / 2;
+  const c = [cu * ux - cv * uz, cu * uz + cv * ux];
+  let w = u1 - u0, d = v1 - v0;
+  if (d > w) { [w, d] = [d, w]; [ux, uz] = [-uz, ux]; } // w is always the long side, (ux,uz) its direction
+  return { c, ux, uz, w, d, fill: Math.abs(polygonArea(poly)) / Math.max(1e-6, best.area) };
+}

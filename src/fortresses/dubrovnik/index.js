@@ -1,19 +1,21 @@
 import * as THREE from 'three';
 import * as content from './content.js';
 import * as L from './layout.js';
-import { heightAt, cityPoly } from './terrain.js';
+import { heightAt, isInsideCity } from './terrain.js';
 import { buildWorld } from './build.js';
 import { createModes } from './modes.js';
 import { createSiegeFX } from '../../app/siegefx.js';
 import { createAmbient } from '../../app/ambient.js';
 import { softSpriteTexture } from '../../app/textures.js';
-import { pointInPolygon } from '../../app/geom.js';
 
 /** Cinematic intro path (camera points) and look-at points. */
 const INTRO = {
-  points: [[1700, 520, 1500], [1000, 260, 980], [380, 110, 640], [-150, 120, 420], [-320, 180, 60], [-60, 230, -330], [500, 260, -380], [720, 340, 580]],
-  lookAt: [[300, 20, 60], [300, 20, 60], [200, 25, 120], [-100, 40, 100], [60, 40, -60], [220, 30, -60], [260, 20, 20], [220, 20, 40]],
-  duration: 26,
+  // skim in low over the sea, climb the cliff under the sea walls, cross the roofs to Minčeta, then pull back
+  points: [[-330, 9, 930], [-60, 16, 600], [100, 62, 370], [215, 118, 150], [250, 150, -110], [520, 235, -330], [860, 330, 120], [780, 360, 660]],
+  lookAt: [[190, 40, 250], [195, 38, 240], [200, 30, 170], [190, 20, 0], [165, 45, -165], [230, 25, -40], [225, 20, 40], [220, 20, 60]],
+  fov: [64, 46],          // wide while low and fast, settling to the normal lens
+  hours: [6.1, null],     // dawn breaks during the approach (null = the viewer's current hour)
+  duration: 11,
 };
 
 export default {
@@ -34,8 +36,8 @@ export default {
     onProgress(0.9, 'Loading the guns');
     const fx = createSiegeFX({
       scene: engine.scene, heightAt,
-      isInsideCity: (x, z) => pointInPolygon([x, z], cityPoly),
-      roofHeightAt: (x, z) => heightAt(x, z) + 11,
+      isInsideCity,
+      roofHeightAt: (x, z) => heightAt(x, z) + 12,
       textures: { soft: softSpriteTexture(128) },
     });
     const modes = createModes({ engine, built, fx, content });
@@ -74,6 +76,9 @@ export default {
       get mode() { return modes.mode; },
       setYear: modes.setYear,
       highlight: modes.highlight,
+      pick: modes.pick,
+      setDiorama: modes.setDiorama,
+      siegeCamera(id) { return L.SIEGE_CAMERA[id] || L.CAMERA.overview; },
       siege: modes.siege,
       timelineRange: [700, 2026],
       dispose() {
