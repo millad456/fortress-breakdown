@@ -82,18 +82,18 @@ export function createUI({ root, engine, world, content, entry }) {
     </aside>
     <div class="dock">
       <div class="dock-card" data-dock="anatomy">
-        <div class="dock-row"><h4>Anatomy of the defences</h4><span class="spacer" style="flex:1"></span>
+        <div class="dock-row keep"><h4>Anatomy of the defences</h4><span class="spacer" style="flex:1"></span>
           <div class="legend"><span><i style="background:#d9462b"></i>Land wall 4–6 m</span><span><i style="background:#e07a2f"></i>West wall</span><span><i style="background:#e9c46a"></i>Harbour wall ~3 m</span><span><i style="background:#4cc9f0"></i>Sea wall 1.5–3 m</span><span><i style="background:#b48cff"></i>Outer wall</span><span><i style="background:#b3192b"></i>Forts (Lovrijenac 12 m)</span></div></div>
         <div class="anatomy-body"><p>Colour shows how thick each stretch of wall is. The land front, where siege engines and cannon could be brought up, is three to four times thicker than the sea walls perched on the cliffs. Buildings are faded so you can read the circuit. Minčeta's drum is 6 m thick; Lovrijenac's seaward walls reach 12 m while its city-facing wall is only 60 cm — so the Republic could retake it from a mutinous garrison.</p>
         ${XSEC_SVG}</div>
       </div>
       <div class="dock-card" data-dock="fire">
-        <div class="dock-row"><h4>Fields of fire</h4><span style="flex:1"></span>
+        <div class="dock-row keep"><h4>Fields of fire</h4><span style="flex:1"></span>
           <div class="legend"><span><i style="background:#ffb347"></i>Minčeta</span><span><i style="background:#ff6b6b"></i>Bokar</span><span><i style="background:#7bdff2"></i>Lovrijenac</span><span><i style="background:#9bf6a3"></i>St John</span><span><i style="background:#ffd166"></i>Revelin</span><span><i style="background:#f29bd0"></i>Wall towers &amp; bastions</span><span><i style="background:#cdb4ff"></i>Outer bastions</span><span><i style="background:#ffe08a;height:3px"></i>Harbour chain</span></div></div>
         <p>Each fan is the ground that work can actually reach: it stops at the town, and where the hillside rises above the guns. Every approach is covered twice. Lovrijenac and Bokar cross their fire over the Pile bridge; Minčeta and the outer bastions sweep the moat; Revelin takes Ploče; St John and the Kaše breakwater seal the harbour, which could be closed with a chain at night. Nowhere could an attacker stand without being shot at from two directions.</p>
       </div>
       <div class="dock-card" data-dock="timeline">
-        <div class="dock-row"><div class="year"><span data-year>1250</span><small>year</small></div>
+        <div class="dock-row keep"><div class="year"><span data-year>1250</span><small>year</small></div>
           <div class="slider-wrap">
             <div class="marks">${content.timeline.filter((e) => e.siege).map((e) => `<button class="mark ${e.disaster ? 'disaster' : ''}" data-mark="${e.year}" style="--at:${(e.year - world.timelineRange[0]) / (world.timelineRange[1] - world.timelineRange[0])}" title="${esc(e.year + ' · ' + e.label)}">${e.disaster ? '✦' : '⚔'}</button>`).join('')}</div>
             <input class="slider" type="range" min="${world.timelineRange[0]}" max="${world.timelineRange[1]}" step="1" value="1250" data-year-slider>
@@ -104,14 +104,14 @@ export function createUI({ root, engine, world, content, entry }) {
         <div class="diorama" data-diorama><span class="badge" data-dio-badge></span><div class="dio-text"><b data-dio-title></b><span data-dio-text></span></div><button class="btn ghost" data-dio-replay>Watch the full replay →</button></div>
       </div>
       <div class="dock-card" data-dock="siege">
-        <div class="dock-row"><div class="chips" data-siege-chips>${content.sieges.map((s) => `<button class="chip" data-siege="${s.id}">${esc(s.name)} <span class="muted">${esc(s.years)}</span></button>`).join('')}</div>
+        <div class="dock-row keep"><div class="chips" data-siege-chips>${content.sieges.map((s) => `<button class="chip" data-siege="${s.id}">${esc(s.name)} <span class="muted">${esc(s.years)}</span></button>`).join('')}</div>
           <span style="flex:1"></span><button class="btn ghost" data-siege-pause>⏸</button><button class="btn ghost" data-siege-stop>Stop</button></div>
-        <div class="progress"><i data-siege-progress></i></div>
+        <div class="progress keep"><i data-siege-progress></i></div>
         <div class="beat" data-siege-beat>Pick a siege to replay it over the city.</div>
         <div class="siege-stats" data-siege-stats></div>
       </div>
       <div class="dock-card" data-dock="tour">
-        <div class="dock-row tour-nav"><span class="step" data-tour-step></span><h4 data-tour-title style="flex:1"></h4>
+        <div class="dock-row tour-nav keep"><span class="step" data-tour-step></span><h4 data-tour-title style="flex:1"></h4>
           <button class="btn ghost" data-tour-prev>←</button><button class="btn primary" data-tour-next>Next →</button><button class="icon-btn" data-tour-exit title="Exit tour">✕</button></div>
         <p data-tour-text></p>
       </div>
@@ -130,8 +130,50 @@ export function createUI({ root, engine, world, content, entry }) {
   const $$ = (sel) => [...root.querySelectorAll(sel)];
   const on = (el, ev, fn) => { el.addEventListener(ev, fn); cleanup.push(() => el.removeEventListener(ev, fn)); };
 
+  // ------------------------------------------------------------ minimize: the panel and every dock card fold down to their essentials
+  const mins = new Set();
+  const isPhone = () => window.matchMedia('(max-width: 900px)').matches;
+  const isCompact = () => window.matchMedia('(max-width: 900px), (max-height: 500px)').matches;
+  $$('.dock-card').forEach((d) => d.insertAdjacentHTML('afterbegin', `<button class="grab" data-min="${d.dataset.dock}" aria-expanded="true" aria-label="Minimize" title="Minimize"><span></span></button>`));
+  $('.panel-head').insertAdjacentHTML('beforeend', '<button class="icon-btn min-btn" data-min="panel" aria-expanded="true" aria-label="Minimize" title="Minimize"><span>▾</span></button>');
+  function setMin(key, v) { if (v) mins.add(key); else mins.delete(key); layout(); }
+  on(root, 'click', (e) => {
+    const b = e.target.closest('[data-min]');
+    if (b) { setMin(b.dataset.min, !mins.has(b.dataset.min)); return; }
+    // a minimized panel opens again when its heading is tapped
+    if (mins.has('panel') && e.target.closest('.panel-head') && !e.target.closest('button')) setMin('panel', false);
+  });
+  /** Apply minimized states, and on phones stack the sheet, the dock and the tour card so none covers another. */
+  function layout() {
+    const panelEl = $('[data-panel]'), tourEl = $('[data-dock="tour"]');
+    $$('[data-min]').forEach((b) => {
+      const m = mins.has(b.dataset.min);
+      b.setAttribute('aria-expanded', String(!m));
+      b.title = m ? 'Expand' : 'Minimize';
+      b.setAttribute('aria-label', b.title);
+    });
+    $$('.dock-card').forEach((d) => d.classList.toggle('min', mins.has(d.dataset.dock)));
+    panelEl.classList.toggle('min', mins.has('panel'));
+    const open = panelEl.classList.contains('open');
+    root.classList.toggle('sheet-min', open && mins.has('panel'));
+    root.classList.toggle('touring', !!tour);
+    const st = root.style;
+    const tb = $('.topbar').getBoundingClientRect().bottom;
+    st.setProperty('--topbar', `${Math.ceil(tb)}px`);
+    st.removeProperty('--sheet-top');
+    st.removeProperty('--dock-bottom');
+    if (open && isPhone()) {
+      // sheet open: the tour card moves to the top and the sheet stops below it;
+      // sheet minimized: the dock sits on top of it (offsetHeight ignores the slide-in transform)
+      const top = tourEl.classList.contains('show') && !mins.has('panel') ? tourEl.getBoundingClientRect().bottom : tb;
+      st.setProperty('--sheet-top', `${Math.ceil(top)}px`);
+      if (mins.has('panel')) st.setProperty('--dock-bottom', `${panelEl.offsetHeight}px`);
+    }
+  }
+  on(window, 'resize', layout);
+
   // ------------------------------------------------------------ layout: the rail can be hidden; docks and toasts keep clear of it
-  let railOpen = window.innerWidth > 900;
+  let railOpen = window.innerWidth > 900 && window.innerHeight > 500;
   const setRail = (open) => { railOpen = open; root.classList.toggle('rail-open', open); };
   setRail(railOpen);
   root.classList.add('intro-on');
@@ -187,10 +229,11 @@ export function createUI({ root, engine, world, content, entry }) {
   // ------------------------------------------------------------ panel
   const panel = $('[data-panel]');
   let lightbox = null;
-  function openFeature(id, { fly = true } = {}) {
+  function openFeature(id, { fly = true, min = false } = {}) {
     const f = byId[id];
     if (!f) return;
     activeFeature = id;
+    if (min) mins.add('panel'); else mins.delete('panel');
     $$('[data-feature]').forEach((b) => b.classList.toggle('active', b.dataset.feature === id));
     applyHighlight();
     root.classList.add('panel-open');
@@ -224,6 +267,7 @@ export function createUI({ root, engine, world, content, entry }) {
     }));
     body.querySelector('[data-refly]')?.addEventListener('click', () => engine.flyTo({ ...world.cameraFor(id), duration: 1.8 }));
     panel.classList.add('open');
+    layout();
   }
   function closePanel() {
     panel.classList.remove('open');
@@ -231,6 +275,7 @@ export function createUI({ root, engine, world, content, entry }) {
     root.classList.remove('panel-open');
     applyHighlight();
     $$('[data-feature]').forEach((b) => b.classList.remove('active'));
+    layout();
   }
   function openLightbox(src, caption) {
     closeLightbox();
@@ -282,6 +327,7 @@ export function createUI({ root, engine, world, content, entry }) {
     if (next === 'siege' && !silent) engine.flyTo({ position: [720, 400, 860], target: [220, 20, 60], duration: 2.6 });
     if (next !== 'siege') stopSiege();
     if (next !== 'timeline') stopYearPlay();
+    layout();
   }
   $$('[data-mode]').forEach((b) => on(b, 'click', () => { exitTour(); setMode(b.dataset.mode); }));
 
@@ -378,7 +424,9 @@ export function createUI({ root, engine, world, content, entry }) {
   const tourCard = $('[data-dock="tour"]');
   function startTour() {
     closePanel();
-    tour = { active: true, i: -1, rail: railOpen };
+    tour = { active: true, i: -1, rail: railOpen, mins: new Set(mins) };
+    if (isCompact()) ['anatomy', 'fire', 'timeline', 'siege'].forEach((k) => mins.add(k));
+    mins.delete('tour');
     setRail(false);
     gotoStep(0);
   }
@@ -391,7 +439,7 @@ export function createUI({ root, engine, world, content, entry }) {
     setMode(s.mode || 'explore', { silent: true });
     if (s.mode === 'siege') playSiege(s.siege || 'siege1991');
     if (s.mode === 'timeline') { stopYearPlay(); setYear(s.year || 1460); }
-    if (s.feature) openFeature(s.feature, { fly: true });
+    if (s.feature) openFeature(s.feature, { fly: true, min: isCompact() });
     else {
       closePanel();
       const cam = s.mode === 'fire' ? { position: [250, 900, 330], target: [220, 0, 60] } : s.mode === 'siege' ? null : world.cameraFor(s.camera || 'overview');
@@ -404,10 +452,13 @@ export function createUI({ root, engine, world, content, entry }) {
     $('[data-tour-title]').textContent = s.title;
     $('[data-tour-text]').innerHTML = rich(s.text);
     $('[data-tour-next]').textContent = i === steps.length - 1 ? 'Finish' : 'Next →';
+    layout();
   }
   function exitTour() {
     if (!tour) return;
     setRail(tour.rail);
+    mins.clear();
+    tour.mins.forEach((k) => mins.add(k));
     tour = null;
     tourCard.classList.remove('show');
     setMode('explore');
@@ -480,8 +531,12 @@ export function createUI({ root, engine, world, content, entry }) {
   on($('[data-intro-skip]'), 'click', finishIntro);
   on($('[data-intro-explore]'), 'click', finishIntro);
 
+  layout();
+
   return {
-    playIntro, openFeature, closePanel, setMode, startTour, toast,
+    playIntro, openFeature, closePanel, setMode, startTour, toast, setMin, exitTour,
+    gotoStep: (i) => tour && gotoStep(i),
+    tourSteps: content.tour,
     dispose() { cleanup.forEach((f) => f()); closeLightbox(); stopSiege(); stopYearPlay(); root.innerHTML = ''; },
   };
 }

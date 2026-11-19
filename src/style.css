@@ -137,7 +137,7 @@ em { font-style: italic; }
 .lightbox .cap { position: absolute; bottom: 16px; left: 0; right: 0; text-align: center; font-size: 12px; color: var(--ink-2); }
 
 /* bottom dock */
-.dock { position: absolute; left: 18px; right: 18px; bottom: 18px; display: flex; justify-content: center; pointer-events: none; }
+.dock { position: absolute; left: 18px; right: 18px; bottom: 18px; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
 .dock > * { pointer-events: auto; }
 .dock-card { background: var(--glass-2); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 18px; width: min(860px, 100%); display: none; }
 .dock-card.show { display: block; }
@@ -263,3 +263,94 @@ em { font-style: italic; }
 .diorama .dio-text b { display: block; font-family: var(--serif); font-size: 18px; font-weight: 500; color: var(--ink); }
 .diorama .btn { flex: none; white-space: nowrap; }
 @media (max-width: 900px) { .diorama { flex-wrap: wrap; } }
+
+/* ---------------- minimize: the panel and every dock card fold down to their essentials ---------------- */
+.dock-card { position: relative; padding-top: 22px; }
+.grab { position: absolute; top: 0; left: 0; right: 0; height: 20px; display: grid; place-items: center; border-radius: var(--radius) var(--radius) 0 0; }
+.grab span { position: relative; width: 38px; height: 4px; border-radius: 2px; background: rgba(241, 235, 223, 0.28); transition: background .2s; }
+.grab span::after { content: '▾'; position: absolute; left: 44px; top: -7px; font-size: 11px; line-height: 1; color: var(--muted); }
+.grab[aria-expanded="false"] span::after { content: '▴'; }
+.grab:hover span, .grab:focus-visible span { background: var(--gold); }
+.grab:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+@media (pointer: coarse) { .grab { height: 26px; } .dock-card { padding-top: 26px; } }
+.dock-card.min { padding-top: 18px; padding-bottom: 10px; max-height: none; overflow: visible; }
+.dock-card.min > :not(.keep):not(.grab) { display: none; }
+.dock-card.min .legend { display: none; }
+.dock-card.min h4 { font-size: 17px; }
+.dock-card.min .year { font-size: 28px; min-width: 76px; }
+.dock-card.min .year small { display: none; }
+.dock-card.min .chips:has(.chip.active) .chip:not(.active) { display: none; }
+.dock-card.min .progress { margin-top: 8px; }
+.dock-card.min .tour-nav .btn { padding: 6px 12px; }
+
+.panel .min-btn { position: absolute; top: 14px; right: 56px; }
+.panel .min-btn span { display: inline-block; transition: transform .2s; }
+.panel.min .min-btn span { transform: rotate(180deg); }
+.panel-head .eyebrow { padding-right: 92px; }
+.panel.min { bottom: auto; }
+.panel.min .panel-body, .panel.min .panel-head .sub { display: none; }
+.panel.min .panel-head { border-bottom: 0; padding-bottom: 14px; cursor: pointer; }
+.panel.min .panel-head h2 { font-size: 24px; }
+
+/* ---------------- phones: a bottom sheet that never covers the dock or the tour ---------------- */
+@media (max-width: 900px) {
+  .panel { left: 8px; right: 8px; bottom: 8px; width: auto; max-height: min(60vh, calc(100% - var(--sheet-top, 110px) - 16px)); border-radius: var(--radius); }
+  .panel.min { bottom: 8px; }
+  .panel-head { padding: 14px 16px 10px; }
+  .panel-head h2 { font-size: 26px; }
+  .panel-body { padding: 14px 16px 20px; }
+  .dock-card { max-height: 45vh; overflow-y: auto; padding-left: 14px; padding-right: 14px; }
+  .dock-card.min { max-height: none; }
+  /* sheet open: the tour card moves up under the top bar, the mode card steps aside */
+  .ui.panel-open:not(.sheet-min) .dock { top: calc(var(--topbar, 100px) + 8px); bottom: auto; }
+  .ui.panel-open:not(.sheet-min) .dock-card:not([data-dock="tour"]) { display: none; }
+  /* sheet minimized: the dock sits just above it */
+  .ui.sheet-min .dock { bottom: calc(var(--dock-bottom, 0px) + 16px); }
+  /* touring with a place open: the tour card and the sheet are enough */
+  .ui.touring.panel-open .dock-card:not([data-dock="tour"]) { display: none; }
+  /* a tighter top bar: mark, time and tour on one row, the modes on the next */
+  .topbar .brand { font-size: 0; gap: 0; }
+  .topbar .brand-mark { width: 18px; height: 18px; }
+  .tabs { order: 5; flex: 1 1 100%; justify-content: space-between; }
+  .tabs button { white-space: nowrap; padding: 6px 8px; flex: 1; justify-content: center; }
+  .tool { flex: 1 1 auto; min-width: 0; padding: 6px 10px; }
+  .tool input[type=range] { flex: 1; width: auto; min-width: 40px; }
+  .tool [data-hour-label] { flex: none; }
+  .topbar [data-tour] { flex: none; padding: 8px 13px; }
+  .tour-nav { flex-wrap: wrap; row-gap: 6px; }
+  .tour-nav h4 { flex: 1 1 100% !important; order: -1; font-size: 19px; }
+  .dock-card.min .tour-nav h4 { font-size: 16px; }
+  .year { font-size: 32px; min-width: 84px; }
+}
+/* wide but short screens (phones held sideways) */
+@media (min-width: 901px) and (max-width: 1200px) {
+  .topbar { gap: 10px; }
+  .topbar .fort-name { display: none; }
+  .tabs button { white-space: nowrap; padding: 7px 11px; }
+  .tabs button .k { display: none; }
+  .tool input[type=range] { width: 90px; }
+}
+@media (min-width: 901px) and (max-height: 500px) {
+  .topbar { padding: 8px 14px; }
+  .panel { top: calc(var(--topbar, 58px) + 6px); bottom: 10px; width: min(380px, 44vw); }
+  .ui.panel-open .dock { right: calc(min(380px, 44vw) + 30px); }
+  .dock { bottom: 10px; }
+  .dock-card { max-height: calc(100vh - 80px); overflow-y: auto; }
+  .dock-card.min { max-height: none; }
+  .left-rail { top: 96px; max-height: calc(100% - 110px); }
+  .rail-toggle { top: 58px; }
+}
+/* phones held sideways (narrow and short): one-row top bar, single-line minimized cards */
+@media (max-width: 900px) and (max-height: 500px) {
+  .topbar { flex-wrap: nowrap; padding: 6px 10px; }
+  .tabs { order: 0; flex: 0 1 auto; }
+  .tabs button { flex: none; padding: 6px 9px; }
+  .tool { flex: 0 1 200px; }
+  .dock-card.min .tour-nav h4 { flex: 1 1 auto !important; order: 0; }
+  .dock-card.min .tour-nav .step { display: none; }
+  .panel.min .panel-head .eyebrow { display: none; }
+  .panel.min .panel-head { padding-top: 10px; padding-bottom: 10px; }
+  .panel.min .panel-head h2 { font-size: 21px; }
+  .panel.min .close, .panel.min .min-btn { top: 6px; }
+  .dock { gap: 6px; }
+}

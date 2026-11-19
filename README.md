@@ -24,6 +24,10 @@ npm run build      # static site in dist/
 
 Visual QA (headless screenshots into `shots/`): `npm i -D playwright && npx playwright install chromium && node scripts/shots.mjs`
 
+Phone layout check: `node scripts/mobile.mjs [baseUrl]` screenshots the main states at 390×844, 375×667, 844×390, 915×412 and 1440×900 and fails if any two cards overlap, a card has no minimize control, or minimized cards still cover too much of the screen.
+
+On phones the place panel is a bottom sheet that never covers the tour card or the mode controls, and every card can be minimized: the grab bar on top of a dock card, or ▾ on the panel. Minimized cards keep their essentials (the year slider and Play, the siege and Pause/Stop, the tour arrows).
+
 ## Structure
 
 ```
